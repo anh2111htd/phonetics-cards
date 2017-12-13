@@ -76,7 +76,7 @@ class Decks extends Component {
         var noteList = this.state.noteList;
         var self = this;
         return (
-            <View>
+            <ScrollView>
                 <List>
                     {
                         noteList.map((note) => {
@@ -87,7 +87,7 @@ class Decks extends Component {
                         })
                     }
                 </List>
-            </View>
+            </ScrollView>
         );
     }
 }

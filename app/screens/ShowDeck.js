@@ -40,12 +40,16 @@ class ShowDeck extends Component {
             )
         }
 
-        var content = this.state.content[0].word;
+        var content = this.state.content;
 		return (
 			<View>
-				<Text>
-					{content}
-				</Text>
+				<List>
+					{
+                        content.map(function(card) {
+                            return  <ListItem title={`${card.word} + ${card.phonetic}`}/>
+                        })
+                    }
+				</List>
 			</View>
 		);
 	}

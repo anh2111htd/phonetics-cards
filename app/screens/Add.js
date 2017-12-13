@@ -7,6 +7,13 @@ const dirs = RNFetchBlob.fs.dirs
 
 class Add extends Component {
 
+  constructor() {
+    super();
+    this.state = {
+      waiting: true
+    };
+  }
+
   listDir() {
     return RNFetchBlob.fs.ls(`${dirs.DocumentDir}`)
   }
@@ -44,7 +51,37 @@ class Add extends Component {
       })
   }
 
-  createNewDeck() {
+  getListofUniqueWords(string) {
+    var cleanString = string.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g,""),
+        words = cleanString.split(' '),
+        frequencies = {},
+        word, frequency, i;
+    for( i=0; i<words.length; i++ ) {
+      word = words[i].toLowerCase();
+      if (word.length <= 3) continue;
+      frequencies[word] = frequencies[word] || 0;
+      frequencies[word]++;
+    }
+    return Object.keys(frequencies);
+  }
+
+  mapPhoneticTranslation(word) {
+    return {
+      "word": word,
+      "phonetic": word
+    };
+  }
+
+  addSuperMemo(wordInJson) {
+    return {
+      ...wordInJson,
+      "nth": "0",
+      "lastInterval": "0",
+      "EF": "0",
+    }
+  }
+
+  createNewDeck= () => {
     const dummy_array_json =
     {
       note:
@@ -65,6 +102,16 @@ class Add extends Component {
           },
         ],
     }
+    while (this.state.waiting);
+    var self = this;
+    const jsonArray = {
+                        note:
+                        this.getListofUniqueWords(this.state.rawText)
+                          .map(
+                            function(word) {
+                              return self.addSuperMemo(self.mapPhoneticTranslation(word));
+                            })
+                      };
     var currentdate = new Date();
     var datetime =  currentdate.getDate() + "_"
                     + (currentdate.getMonth()+1)  + "_"
@@ -77,13 +124,15 @@ class Add extends Component {
         .catch((err) => {
             console.log(err)
         });
-    fs.writeFile(`${dirs.DocumentDir}/PhoneticCards/${newFileName}`, JSON.stringify(dummy_array_json), 'utf8')
+
+    fs.writeFile(`${dirs.DocumentDir}/PhoneticCards/${newFileName}`, JSON.stringify(jsonArray), 'utf8')
                     .catch(err => console.log(err));
   }
 
   render() {
     return (
         <View>
+          <TextInput onChangeText={(text) => this.setState({waiting: false, rawText: text})} />
           <Button
             onPress={this.createNewDeck}
             title="Create new json file"
