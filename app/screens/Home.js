@@ -4,7 +4,7 @@ import { ListItem, List } from 'react-native-elements';
 import { Icon } from 'react-native-elements'
 
 class Home extends Component {
-    
+
     handleAddPress = () => {
         this.props.navigation.navigate('Add');
     }
@@ -14,7 +14,7 @@ class Home extends Component {
     }
 
     render() {
-        return (     
+        return (
             <List>
                 <ListItem
                     onPress={this.handleDecksPress}

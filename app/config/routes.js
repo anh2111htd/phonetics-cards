@@ -3,6 +3,7 @@ import { StackNavigator } from 'react-navigation';
 import Home from '../screens/Home';
 import Decks from '../screens/Decks';
 import Add from '../screens/Add';
+import ShowDeck from  '../screens/ShowDeck';
 
 const HomeStack = StackNavigator(
     {
@@ -16,6 +17,12 @@ const HomeStack = StackNavigator(
             screen: Decks,
             navigationOptions: {
                 headerTitle: 'Decks',
+            },
+        },
+        ShowDeck: {
+            screen: ShowDeck,
+            navigationOptions: {
+                headerTitle: 'ShowDeck',
             },
         },
         Add: {
