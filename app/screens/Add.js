@@ -68,14 +68,14 @@ class Add extends Component {
   mapPhoneticTranslation(word) {
     return {
       "word": word,
-      "phonetic": word
+      "phonetic": `https://www.oxfordlearnersdictionaries.com/definition/english/${word}`
     };
   }
 
   addSuperMemo(wordInJson) {
     return {
       ...wordInJson,
-      "nth": "0",
+      "nth": 0,
       "lastInterval": "0",
       "EF": "0",
     }

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, ScrollView, Text } from 'react-native';
+import { View, ScrollView, Text, Linking, Button } from 'react-native';
 import { List, ListItem } from 'react-native-elements';
 
 
@@ -12,7 +12,9 @@ class ShowDeck extends Component {
 	constructor() {
 		super();
 		this.state = {
-			isLoading: true
+			isLoading: true,
+            word: "Loading...",
+            phonetic: ""
 		}
 	}
 
@@ -21,15 +23,62 @@ class ShowDeck extends Component {
 		filename = this.props.navigation.state.params.filename;
         fs.readFile(`${dirs.DocumentDir}/PhoneticCards/${filename}`, 'utf8')
         	.then((content) => {
-                let contentObject = JSON.parse(content)
+                let contentObject = JSON.parse(content).note
+                console.log(contentObject);
+                var countOne = 0;
+                var firstPos;
+                for (var i = contentObject.length-1; i>=0; i--) {
+                    if (contentObject[i].nth == 0) {
+                        firstPos = i;
+                    } else {
+                        countOne+=1;
+                    }
+                }
                 self.setState({
+                    ...this.state,
                 	isLoading: false,
-                	content: contentObject.note
+                	cards: contentObject,
+                    index: firstPos,
+                    word: contentObject[firstPos].word,
+                    phonetic: contentObject[firstPos].phonetic,
+                    countOne: countOne
                 })
             })
             .catch((err) => {
                 console.log(err)
             })
+    }
+
+    handlePressStop = () => {
+        const { cards } = this.state;
+        console.log(cards);
+        fs.writeFile(`${dirs.DocumentDir}/PhoneticCards/${filename}`, JSON.stringify({note: cards}), 'utf8')
+                    .catch(err => console.log(err))
+    }
+
+    handlePressAction(isNext) {
+        const { index, cards, countOne } = this.state;
+
+        if (countOne >= cards.length) return this.handlePressStop;
+
+        var nextIndex = (index + 1) % cards.length;
+        while (cards[nextIndex].nth == 1) nextIndex = (nextIndex + 1)% cards.length;
+
+        var newCards = cards;
+        newCards[index] = {
+            ...newCards[index],
+            nth: isNext
+        }
+
+        console.log(newCards);
+        this.setState({
+            ...this.state,
+            index: nextIndex,
+            word: cards[nextIndex].word,
+            phonetic: cards[nextIndex].phonetic,
+            cards: newCards,
+            countOne: countOne+isNext
+        });
     }
 
 	render() {
@@ -40,16 +89,30 @@ class ShowDeck extends Component {
             )
         }
 
-        var content = this.state.content;
 		return (
 			<View>
-				<List>
-					{
-                        content.map(function(card) {
-                            return  <ListItem title={`${card.word} + ${card.phonetic}`}/>
-                        })
-                    }
-				</List>
+                <Text style={{color: 'blue', fontSize: 50}}
+                      onPress={() => Linking.openURL(this.state.phonetic)}>
+                    {this.state.word}
+                </Text>
+                <Text> _ </Text>
+                <Button
+                    onPress={() => this.handlePressAction(1)}
+                    title="Next"
+                    style={{padding: 10}}
+                />
+                <Text> _ </Text>
+                <Button
+                    onPress={() => this.handlePressAction(0)}
+                    title="Again"
+                    style={{padding: 10}}
+                />
+                <Text> _ </Text>
+                <Button
+                    onPress={this.handlePressStop}
+                    title="Stop"
+                    style={{padding: 10}}
+                />
 			</View>
 		);
 	}
