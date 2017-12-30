@@ -1,17 +1,59 @@
 import React, { Component } from "react";
-import { AsyncStorage, View, StatusBar, Platform, Linking, TextInput, Button } from 'react-native';
+import { Text, AsyncStorage, View, StatusBar, Platform, Linking, TextInput, Button } from 'react-native';
+import { ButtonGroup, Card } from 'react-native-elements';
 
 import RNFetchBlob from 'react-native-fetch-blob';
 const fs = RNFetchBlob.fs
 const dirs = RNFetchBlob.fs.dirs
 
-class Add extends Component {
+import { StyleSheet } from 'react-native';
+const styles = StyleSheet.create({
+    pageContainer: {
+      flex: 1,
+    },
+    form: {
+      flex: 1,
+      justifyContent: 'flex-start',
+    },
+    buttonArea: {
+      flex: 1, 
+      justifyContent: 'flex-end',
+    },
+    buttonRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'flex-start',
+    },
+    buttonStyle: {
+      backgroundColor:'#7f47dd',
+    },
+    innerBorderStyle: {
+      // borderWidth: 0,
+      color: '#000',
+    },
+    firstText: {
+      color: '#000000',
+      fontSize: 15,
+      fontWeight: '300',     
+      borderBottomWidth: 0,  
+    },
+    textContainer: {
+      // flex: 1,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center', 
+    },
+  });
 
+class Add extends Component {
   constructor() {
     super();
     this.state = {
-      waiting: true
+      waiting: true,
+      selectedIndex: 0, 
     };
+    this.handlePress = this.handlePress.bind(this)
   }
 
   listDir() {
@@ -118,7 +160,7 @@ class Add extends Component {
                     + currentdate.getHours() + "_"
                     + currentdate.getMinutes() + "_"
                     + currentdate.getMilliseconds();
-        const newFileName = `add${datetime}.json`;
+    const newFileName = `add${datetime}.json`;
     // Create a real file
     fs.createFile(`${dirs.DocumentDir}/PhoneticCards/${newFileName}`, '', 'utf8')
         .catch((err) => {
@@ -129,15 +171,52 @@ class Add extends Component {
                     .catch(err => console.log(err));
   }
 
+  handlePress (selectedIndex) {
+    if (selectedIndex == 1) {
+      this.createNewDeck();
+    }
+    this.props.navigation.navigate('Home');
+  }
+
+  
   render() {
+    const buttons = ['Cancel', 'OK']
+    const { selectedIndex } = this.state
+
     return (
-        <View>
-          <TextInput onChangeText={(text) => this.setState({waiting: false, rawText: text})} />
-          <Button
-            onPress={this.createNewDeck}
-            title="Create new json file"
-          />
+      <View style={styles.pageContainer}>
+        <View style={styles.form}>
+          <View style={styles.textContainer}>
+            <Text></Text>
+            <Text style={styles.firstText}> Create new deck </Text>
+          </View>
+          <Card>
+            <Text>Paste the text first</Text>
+            <TextInput 
+              onChangeText={(text) => this.setState({waiting: false, rawText: text})} 
+              selectionColor='#0ec6dc'
+              underlineColorAndroid='#0ec6dc'
+            />
+            {/* <View style={{flexDirection: 'row'}}> */}
+            <Text>Give it a short name</Text> 
+            <TextInput 
+              onChangeText={(text) => this.setState({waiting: false, name: text})} 
+              selectionColor='#0ec6dc'
+              underlineColorAndroid='#0ec6dc'
+            />
+            {/* </View> */}
+            <Text>There you go!</Text>
+          </Card>
         </View>
+        <ButtonGroup
+          onPress={this.handlePress}
+          selectedIndex={selectedIndex}
+          buttons={buttons}
+          buttonStyle={styles.buttonStyle}
+          textStyle={{color:'#ffffff'}}
+          selectedTextStyle={{color:'#ffffff'}}
+          />
+      </View>
     );
   }
 }

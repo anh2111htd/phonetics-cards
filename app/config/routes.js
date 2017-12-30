@@ -1,4 +1,4 @@
-import { StackNavigator } from 'react-navigation';
+import { StackNavigator, navigationOptions } from 'react-navigation';
 
 import Home from '../screens/Home';
 import Decks from '../screens/Decks';
@@ -7,33 +7,36 @@ import ShowDeck from  '../screens/ShowDeck';
 
 const HomeStack = StackNavigator(
     {
+        // Home: {
+        //     screen: Home,
+        //     navigationOptions: {
+        //         headerTitle: 'Home',
+        //     },
+        // },
         Home: {
-            screen: Home,
-            navigationOptions: {
-                headerTitle: 'Home',
-            },
-        },
-        Decks: {
             screen: Decks,
             navigationOptions: {
-                headerTitle: 'Decks',
+                header: null,
             },
         },
         ShowDeck: {
             screen: ShowDeck,
             navigationOptions: {
-                headerTitle: 'ShowDeck',
+                header: null,
             },
         },
         Add: {
             screen: Add,
             navigationOptions: {
-                headerTitle: 'Add',
+                header: null,
             },
         }
     },
+    // {
+    //     headerMode: 'screen',
+    // },
     {
-        headerMode: 'screen',
+        navigationOptions: { header: null}  
     }
 );
 
@@ -42,10 +45,12 @@ export default StackNavigator(
         Home: {
             screen: HomeStack,
         },
-    },
+    }, //
+    
+    
     {
         mode: 'modal',
         headerMode: 'none',
-        // cardStyle: { paddingTop: StatusBar.currentHeight },
+    //     // cardStyle: { paddingTop: StatusBar.currentHeight },
     },
 );

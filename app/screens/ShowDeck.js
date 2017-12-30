@@ -1,11 +1,51 @@
 import React, { Component } from "react";
 import { View, ScrollView, Text, Linking, Button } from 'react-native';
-import { List, ListItem } from 'react-native-elements';
+import { List, ListItem, Card, ButtonGroup } from 'react-native-elements';
 
 
 import RNFetchBlob from 'react-native-fetch-blob';
 const fs = RNFetchBlob.fs
 const dirs = RNFetchBlob.fs.dirs
+
+import { StyleSheet } from 'react-native';
+const styles = StyleSheet.create({
+    pageContainer: {
+      flex: 1,
+    },
+    form: {
+      flex: 1,
+      justifyContent: 'flex-start',
+    },
+    buttonArea: {
+      flex: 1, 
+      justifyContent: 'flex-end',
+    },
+    buttonRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'flex-start',
+    },
+    buttonStyle: {
+      backgroundColor:'#7f47dd',
+    },
+    innerBorderStyle: {
+      // borderWidth: 0,
+      color: '#000',
+    },
+    firstText: {
+      color: '#000000',
+      fontSize: 15,
+      fontWeight: '300',     
+      borderBottomWidth: 0,  
+    },
+    textContainer: {
+      // flex: 1,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center', 
+    },
+  });
 
 class ShowDeck extends Component {
 
@@ -14,8 +54,11 @@ class ShowDeck extends Component {
 		this.state = {
 			isLoading: true,
             word: "Loading...",
-            phonetic: ""
-		}
+            phonetic: "",
+            selectedIndex: 0,
+        }
+        this.handlePressAction = this.handlePressAction.bind(this);
+        this.handlePressStop = this.handlePressStop.bind(this);
 	}
 
 	componentWillMount() {
@@ -49,17 +92,27 @@ class ShowDeck extends Component {
             })
     }
 
-    handlePressStop = () => {
+    handlePressStop() {
         const { cards } = this.state;
         console.log(cards);
         fs.writeFile(`${dirs.DocumentDir}/PhoneticCards/${filename}`, JSON.stringify({note: cards}), 'utf8')
-                    .catch(err => console.log(err))
+                    .catch(err => console.log(err));
     }
 
-    handlePressAction(isNext) {
+    handlePressAction(selectedIndex) {
+        if (selectedIndex == 0) {
+            this.handlePressStop();
+            this.props.navigation.navigate('Home');
+            return;
+        }
+        const isNext = (selectedIndex == 2) ? 1 : 0;
         const { index, cards, countOne } = this.state;
 
-        if (countOne >= cards.length) return this.handlePressStop;
+        if (countOne >= cards.length) {
+            this.handlePressStop();
+            this.props.navigation.navigate('Home');
+            return;
+        }
 
         var nextIndex = (index + 1) % cards.length;
         while (cards[nextIndex].nth == 1) nextIndex = (nextIndex + 1)% cards.length;
@@ -88,33 +141,33 @@ class ShowDeck extends Component {
                 <View><Text>Loading...</Text></View>
             )
         }
+        const buttons = ['Stop', 'Again', 'Next']
+        const { selectedIndex } = this.state
 
-		return (
-			<View>
-                <Text style={{color: 'blue', fontSize: 50}}
+        return (
+            <View style={styles.pageContainer}>
+            <View style={styles.form}>
+            <View style={styles.textContainer}>
+                <Text></Text>
+                <Text style={styles.firstText}> This word appears sometime in your text. </Text>
+            </View>
+            <Card>
+                <Text style={{color: '#000000', fontSize: 50}}
                       onPress={() => Linking.openURL(this.state.phonetic)}>
                     {this.state.word}
                 </Text>
-                <Text> _ </Text>
-                <Button
-                    onPress={() => this.handlePressAction(1)}
-                    title="Next"
-                    style={{padding: 10}}
-                />
-                <Text> _ </Text>
-                <Button
-                    onPress={() => this.handlePressAction(0)}
-                    title="Again"
-                    style={{padding: 10}}
-                />
-                <Text> _ </Text>
-                <Button
-                    onPress={this.handlePressStop}
-                    title="Stop"
-                    style={{padding: 10}}
-                />
-			</View>
-		);
+            </Card>
+            </View>
+            <ButtonGroup
+                onPress={this.handlePressAction}
+                selectedIndex={selectedIndex}
+                buttons={buttons}
+                buttonStyle={styles.buttonStyle}
+                textStyle={{color:'#ffffff'}}
+                selectedTextStyle={{color:'#ffffff'}}
+            />
+            </View>
+        );
 	}
 }
 
