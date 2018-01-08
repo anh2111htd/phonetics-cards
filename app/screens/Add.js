@@ -1,50 +1,16 @@
+//TODO: add same name notifi cation
+//empty text
 import React, { Component } from "react";
-import { Text, AsyncStorage, View, StatusBar, Platform, Linking, TextInput, Button } from 'react-native';
-import { ButtonGroup, Card } from 'react-native-elements';
+import { CheckBox, Text, AsyncStorage, View, StatusBar, Platform, Linking, TextInput, Button } from 'react-native';
+import { ButtonGroup, Card} from 'react-native-elements';
+import { BASE_DATE, getDayDiff } from '../components/SM2'
 
 import RNFetchBlob from 'react-native-fetch-blob';
 const fs = RNFetchBlob.fs
 const dirs = RNFetchBlob.fs.dirs
 
-import { StyleSheet } from 'react-native';
-const styles = StyleSheet.create({
-    pageContainer: {
-      flex: 1,
-    },
-    form: {
-      flex: 1,
-      justifyContent: 'flex-start',
-    },
-    buttonArea: {
-      flex: 1, 
-      justifyContent: 'flex-end',
-    },
-    buttonRow: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: 'flex-start',
-    },
-    buttonStyle: {
-      backgroundColor:'#7f47dd',
-    },
-    innerBorderStyle: {
-      // borderWidth: 0,
-      color: '#000',
-    },
-    firstText: {
-      color: '#000000',
-      fontSize: 15,
-      fontWeight: '300',     
-      borderBottomWidth: 0,  
-    },
-    textContainer: {
-      // flex: 1,
-      height: 40,
-      alignItems: 'center',
-      justifyContent: 'center', 
-    },
-  });
+const TODAY = getDayDiff(BASE_DATE, new Date());
+const dict = require('../components/cmu_dict.json');
 
 class Add extends Component {
   constructor() {
@@ -74,7 +40,7 @@ class Add extends Component {
     console.log(RNFetchBlob.fs.ls(`${dirs.DocumentDir}/PhoneticCards`));
     return RNFetchBlob.fs.ls(`${dirs.DocumentDir}/PhoneticCards`)
   }
-
+  
   componentWillMount() {
     this.listDir(dirs.DocumentDir)
       .then((files) => {
@@ -94,7 +60,7 @@ class Add extends Component {
   }
 
   getListofUniqueWords(string) {
-    var cleanString = string.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g,""),
+    var cleanString = string.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()"\n?]/g," "),
         words = cleanString.split(' '),
         frequencies = {},
         word, frequency, i;
@@ -104,69 +70,66 @@ class Add extends Component {
       frequencies[word] = frequencies[word] || 0;
       frequencies[word]++;
     }
-    return Object.keys(frequencies);
+    console.log(frequencies);
+    return Object.keys(frequencies).map(function(key) {
+      return {
+        word: key,
+        frequency: frequencies[key],
+      }
+    })
   }
 
-  mapPhoneticTranslation(word) {
+  getPhonetic(str) {
+    var res = [];
+    if (dict.hasOwnProperty(str)){
+      res.push(dict[str]);
+    } 
+    if (dict.hasOwnProperty(str+'(1)')){
+      res.push(dict[str+'(1)']);
+    } 
+    if (dict.hasOwnProperty(str+'(2)')){
+      res.push(dict[str+'(2)']);
+    } 
+    if (dict.hasOwnProperty(str+'(3)')){
+      res.push(dict[str+'(3)']);
+    }
+    return res;
+  }
+
+  mapPhoneticTranslation(wordFreq) {
     return {
-      "word": word,
-      "phonetic": `https://www.oxfordlearnersdictionaries.com/definition/english/${word}`
+      ...wordFreq,
+      "phonetic": this.getPhonetic(wordFreq.word),
     };
   }
 
   addSuperMemo(wordInJson) {
     return {
       ...wordInJson,
-      "nth": 0,
-      "lastInterval": "0",
-      "EF": "0",
+      difficulty: 0.3,
+      interval: 1,
+      dueDate: TODAY,
+      update: TODAY - 1,
     }
   }
 
   createNewDeck= () => {
-    const dummy_array_json =
-    {
-      note:
-        [
-          {
-            "word": "Hello",
-            "phonetic": "/həˈloʊ",
-            "nth": "0",
-            "lastInterval": "0",
-            "EF": "0",
-          },
-          {
-            "word": "llo",
-            "phonetic": "/loʊ",
-            "nth": "0",
-            "lastInterval": "0",
-            "EF": "0",
-          },
-        ],
-    }
     while (this.state.waiting);
     var self = this;
     const jsonArray = {
                         note:
-                        this.getListofUniqueWords(this.state.rawText)
-                          .map(
-                            function(word) {
-                              return self.addSuperMemo(self.mapPhoneticTranslation(word));
-                            })
+                          this.getListofUniqueWords(this.state.rawText)
+                            .map(
+                              function(word) {
+                                return self.addSuperMemo(self.mapPhoneticTranslation(word));
+                              }),
                       };
-    var currentdate = new Date();
-    var datetime =  currentdate.getDate() + "_"
-                    + (currentdate.getMonth()+1)  + "_"
-                    + currentdate.getHours() + "_"
-                    + currentdate.getMinutes() + "_"
-                    + currentdate.getMilliseconds();
-    const newFileName = `add${datetime}.json`;
+    const newFileName = this.state.name + '.json';
     // Create a real file
     fs.createFile(`${dirs.DocumentDir}/PhoneticCards/${newFileName}`, '', 'utf8')
         .catch((err) => {
             console.log(err)
         });
-
     fs.writeFile(`${dirs.DocumentDir}/PhoneticCards/${newFileName}`, JSON.stringify(jsonArray), 'utf8')
                     .catch(err => console.log(err));
   }
@@ -177,7 +140,6 @@ class Add extends Component {
     }
     this.props.navigation.navigate('Home');
   }
-
   
   render() {
     const buttons = ['Cancel', 'OK']
@@ -188,24 +150,21 @@ class Add extends Component {
         <View style={styles.form}>
           <View style={styles.textContainer}>
             <Text></Text>
-            <Text style={styles.firstText}> Create new deck </Text>
+            <Text style={styles.firstText}> Create a new Deck </Text>
           </View>
           <Card>
-            <Text>Paste the text first</Text>
+            <Text>Paste your text here</Text>
             <TextInput 
-              onChangeText={(text) => this.setState({waiting: false, rawText: text})} 
-              selectionColor='#0ec6dc'
-              underlineColorAndroid='#0ec6dc'
+              onChangeText={(text) => this.setState({...this.state, rawText: text})} 
+              selectionColor={YELLOW}
+              underlineColorAndroid={YELLOW}
             />
-            {/* <View style={{flexDirection: 'row'}}> */}
             <Text>Give it a short name</Text> 
             <TextInput 
-              onChangeText={(text) => this.setState({waiting: false, name: text})} 
-              selectionColor='#0ec6dc'
-              underlineColorAndroid='#0ec6dc'
+              onChangeText={(text) => this.setState({...this.state, waiting: false, name: text})} 
+              selectionColor={YELLOW}
+              underlineColorAndroid={YELLOW}
             />
-            {/* </View> */}
-            <Text>There you go!</Text>
           </Card>
         </View>
         <ButtonGroup
@@ -215,10 +174,67 @@ class Add extends Component {
           buttonStyle={styles.buttonStyle}
           textStyle={{color:'#ffffff'}}
           selectedTextStyle={{color:'#ffffff'}}
+          containerStyle={{
+                            marginBottom: 0,
+                            marginRight:0,
+                            marginLeft:0,
+                            borderWidth:0,
+                            borderRadius:0,
+                          }} 
           />
       </View>
     );
   }
 }
+
+const PURPLE='#7f47dd';
+const GRAY='#f2f2f2';
+const YELLOW='#fbb03b';
+const GREEN='#0ec6dc';
+
+import { StyleSheet } from 'react-native';
+const styles = StyleSheet.create({
+    pageContainer: {
+      flex: 1,
+    },
+    form: {
+      flex: 1,
+      justifyContent: 'flex-start',
+    },
+    buttonArea: {
+      flex: 1, 
+      justifyContent: 'flex-end',
+    },
+    row: {
+      flex: 1, 
+      flexDirection: 'row'
+    },
+    buttonRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'flex-start',
+    },
+    buttonStyle: {
+      backgroundColor:GREEN,
+    },
+    innerBorderStyle: {
+      // borderWidth: 0,
+      color: '#000',
+    },
+    firstText: {
+      color: '#000000',
+      fontSize: 15,
+      fontWeight: '300',     
+      borderBottomWidth: 0,  
+    },
+    textContainer: {
+      // flex: 1,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center', 
+    },
+  });
+
 
 export default (Add);
