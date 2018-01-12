@@ -29,15 +29,15 @@ class Add extends Component {
   createDir() {
     RNFetchBlob.fs.mkdir(`${dirs.DocumentDir}/PhoneticCards`)
         .then(() => {
-            console.log('OK')
+            // console.log('OK')
         })
         .catch((err) => {
-            console.log('NG')
+            // console.log('NG')
         })
   }
 
   listFiles() {
-    console.log(RNFetchBlob.fs.ls(`${dirs.DocumentDir}/PhoneticCards`));
+    // console.log(RNFetchBlob.fs.ls(`${dirs.DocumentDir}/PhoneticCards`));
     return RNFetchBlob.fs.ls(`${dirs.DocumentDir}/PhoneticCards`)
   }
   
@@ -55,12 +55,12 @@ class Add extends Component {
           return this.listFiles()
       })
       .catch((err) => {
-          console.log(err)
+          // console.log(err)
       })
   }
 
   getListofUniqueWords(string) {
-    var cleanString = string.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()"\n?]/g," "),
+    var cleanString = string.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()"\n?\u00AD\u002D\u2011]/g," "),
         words = cleanString.split(' '),
         frequencies = {},
         word, frequency, i;
@@ -70,7 +70,7 @@ class Add extends Component {
       frequencies[word] = frequencies[word] || 0;
       frequencies[word]++;
     }
-    console.log(frequencies);
+    // console.log(frequencies);
     return Object.keys(frequencies).map(function(key) {
       return {
         word: key,
@@ -159,7 +159,7 @@ class Add extends Component {
               selectionColor={YELLOW}
               underlineColorAndroid={YELLOW}
             />
-            <Text>Give it a short name</Text> 
+            <Text>Give it a unique name</Text> 
             <TextInput 
               onChangeText={(text) => this.setState({...this.state, waiting: false, name: text})} 
               selectionColor={YELLOW}

@@ -1,6 +1,7 @@
 {
   "presets": ["react-native"],
   "ignore": [
-        "*.json"
+        "*.json",
+        "/app/components/cmu_dict.json"
     ]
 }

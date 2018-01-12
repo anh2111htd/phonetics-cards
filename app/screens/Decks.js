@@ -1,11 +1,10 @@
 import React, { Component } from "react";
-import { View, ScrollView, Text, StatusBar, Vibration } from 'react-native';
+import { View, ScrollView, Text, StatusBar, Vibration, Alert } from 'react-native';
 import { List, ListItem, Button, normalize} from 'react-native-elements';
 import ActionButton from 'react-native-action-button';
 import UserAvatar from 'react-native-user-avatar';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { splitDue, getDayDiff, BASE_DATE, getPercentOverdue } from '../components/SM2';
-const TODAY = getDayDiff(BASE_DATE, new Date());
 
 import RNFetchBlob from 'react-native-fetch-blob';
 const fs = RNFetchBlob.fs
@@ -24,6 +23,7 @@ class Decks extends Component {
             noteList: [],
             isLoading: true
         };
+        this.loadAllDecks = this.loadAllDecks.bind(this);
     }
 
     listDir() {
@@ -43,60 +43,58 @@ class Decks extends Component {
     listFiles() {
         return RNFetchBlob.fs.ls(`${dirs.DocumentDir}/PhoneticCards`);
     }
+    
+    componentDidMount() {
+        this.loadAllDecks();
+    }
 
-    componentWillMount() {
-        var self = this;
-        console.log(48);
+    loadAllDecks() {
+        const TODAY = getDayDiff(BASE_DATE, new Date());
+        // console.log(TODAY);
+        // console.log(new Date());
         this.listDir(dirs.DocumentDir)
             .then((files) => {
                 // Check whether the 'PhoneticCards' folder exist or not.
                 const filteredFiles = files.filter((name) => {
-                    return name === 'PhoneticCards'
-                })
+                    return name === 'PhoneticCards';
+                });
                 // If not, create.
                 if (filteredFiles.length === 0) {
-                    this.createDir()
+                    this.createDir();
                 }
-                return this.listFiles()
+                return this.listFiles();
             })
-            .then((files) => { //Add top 3 words, due
-                console.log(files);
+            .then((files) => {
                 var contents = new Array(files.length);
-                Promise.all(
-                    files.map((file, index) => {
-                        return fs.readFile(`${dirs.DocumentDir}/PhoneticCards/${file}`, 'utf8')
-                                .then((content) => {
-                                    let contentObject = JSON.parse(content).note;    
-                                    contents[index] = splitDue(contentObject, TODAY)[0];
-                                }, (reason) => {
-                                    console.log(reason);
-                                }).catch(err => {
-                                    console.log(err);
-                                });
-                    })
-                ).then((values) => {
-                    console.log(73);
-                    console.log(contents);
+                Promise.all(files.map((file, index) => {
+                    return fs.readFile(`${dirs.DocumentDir}/PhoneticCards/${file}`, 'utf8')
+                        .then((content) => {
+                            let contentObject = JSON.parse(content).note;
+                            contents[index] = splitDue(contentObject, TODAY)[0];
+                        }, (reason) => {
+                            console.log(reason);
+                        }).catch(err => {
+                            console.log(err);
+                        });
+                })).then((values) => {
                     var noteList = files.map((file, index) => {
                         return {
                             fileName: file,
-                            keywords: contents[index].slice(0,3).map((c) => { return c.word; }).join(', '),
+                            keywords: contents[index].slice(0, 3).map((c) => { return c.word; }).join(', '),
                             due: contents[index].length,
                         };
                     });
-                    console.log(noteList);
-                    self.setState({
+                    this.setState({
                         noteList: noteList,
                         isLoading: false
-                    })
-                }, (err) => { console.log(err); }).catch(reason => { 
-                    console.log(reason)
-                  });
-                  
+                    });
+                }, (err) => { console.log(err); }).catch(reason => {
+                    console.log(reason);
+                });
             })
             .catch((err) => {
-                console.log(err)
-            })
+                console.log(err);
+            });
     }
 
     handlePressItem(filename) {
@@ -132,6 +130,20 @@ class Decks extends Component {
                                             onPress={() => self.handlePressItem(note.fileName)}
                                             containerStyle={styles.containerListItem}
                                             titleStyle={styles.listItemTitleStyle}
+                                            leftIcon={{name:'checklist', type:'octicon'}}
+                                            leftIconOnPress={() => {Alert.alert(
+                                                'Delete',
+                                                `Are you sure that you want to delete "${note.fileName.slice(0, -5)}"?`,
+                                                [
+                                                    {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+                                                    {text: 'DELETE', onPress: () => {
+                                                        fs.unlink(`${RNFetchBlob.fs.dirs.DocumentDir}/PhoneticCards/${note.fileName}`)
+                                                            .then(() => {
+                                                                this.loadAllDecks();
+                                                            })                                                       
+                                                    }},
+                                                ],
+                                            )}}
                                             badge={{ 
                                                     value: note.due, 
                                                     textStyle: { fontWeight:'bold', fontSize:10},

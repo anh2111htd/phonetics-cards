@@ -1,9 +1,8 @@
 import React, { Component } from "react";
 import { View, ScrollView, Text, Linking, TouchableWithoutFeedback, WebView } from 'react-native';
-import { List, ListItem, Card, ButtonGroup, Button, Badge, normalize, Header } from 'react-native-elements';
+import { List, ListItem, Card, ButtonGroup, Button, Badge, normalize, Header, Icon } from 'react-native-elements';
 
 import { calculate, getDayDiff, getPercentOverdue, BASE_DATE, BEST, CORRECT, WORST, splitDue, splitInSession } from '../components/SM2';
-const TODAY = getDayDiff(BASE_DATE, new Date());
 
 const MAX = 50;
 const IN = 0;
@@ -13,12 +12,18 @@ import RNFetchBlob from 'react-native-fetch-blob';
 const fs = RNFetchBlob.fs
 const dirs = RNFetchBlob.fs.dirs
 
-const Heading = ({frequency, fileName, word, selectedIndex}) => (
+const Heading = ({frequency, fileName, word, selectedIndex, handleDelete}) => (
         <View>
             <View style={styles.textContainer}>
                 <Text></Text>
                 <Text style={styles.firstText}> Appears {frequency} time(s) in "{fileName.slice(0, -5)}". </Text>
             </View>
+            <View style={{margin:0, alignItems:'flex-end'}}>
+                <Icon name='delete-forever' 
+                    onPress={handleDelete}
+                    color='#5c5c5c'
+                    containerStyle={{backgroundColor:'#d2d2d2', borderRadius:10}}/>
+            </View>            
             <Card
                 flexDirection='row'
                 wrapperStyle={{justifyContent: 'center'}}>
@@ -29,12 +34,17 @@ const Heading = ({frequency, fileName, word, selectedIndex}) => (
         </View>
 );
 
+const eb={element: () => <View><Icon raised name='sentiment-very-satisfied' color={YELLOW}/><Text style={{color:'#ffffff'}} >RECALL ALL</Text></View>};
+const gb={element: () => <View><Icon raised name='sentiment-neutral' color={YELLOW}/><Text style={{color:'#ffffff'}} >PARTIALLY</Text></View>};
+const hb={element: () => <View><Icon raised name='sentiment-very-dissatisfied' color={YELLOW}/><Text style={{color:'#ffffff'}} >NOTHING</Text></View>};
+
 const PerfButtons = ({phonetic, word, selectedIndex, handlePressAction}) => (
     <View style={styles.buttonArea}>
         <ButtonGroup
             onPress={handlePressAction}
             selectedIndex={selectedIndex}
-            buttons={['EASY', 'GOOD', 'HARD']}
+            // buttons={['EASY', 'GOOD', 'HARD']}
+            buttons={[eb, gb, hb]}
             buttonStyle={{backgroundColor: GREEN}}
             containerStyle={styles.buttonContainerStyle}
             selectedBackgroundColor={GREEN}
@@ -49,11 +59,11 @@ const ShowButtons = ({handlePressAction, index}) => (
     <View style={styles.buttonArea}>
         <ButtonGroup
             onPress={handlePressAction}
-            buttons={['SHOW ANSWER'+` (${index}/${MAX})`]}
+            buttons={[{element: () => <View><Text style={{color:'#ffffff'}} >SHOW ANSWER</Text><Text style={{color:'#ffffff'}}>Progress: {index+1}/{MAX}</Text></View>}]}
             buttonStyle={{backgroundColor: YELLOW}}
             containerStyle={styles.buttonContainerStyle}
-            selectedBackgroundColor={GREEN}
-            textStyle={{color:'#ffffff'}}
+            // selectedBackgroundColor={GREEN}
+            // textStyle={{color:'#ffffff'}}
             selectedTextStyle={{color:'#ffffff'}}
             component={TouchableWithoutFeedback}
         />
@@ -68,11 +78,11 @@ const Answer = ({phonetic, word, selectedIndex}) => (
             borderBottomColor: GREEN,
             borderBottomWidth: 2,
         }}
-        title='AMERICAN PHONETICS'
+        title='ANSWER'
         titleStyle={{color:YELLOW}}>
-        <Text>From CMU Pronouncing Dictionary:</Text>
+        <Text>CMU Pronouncing Dictionary (American):</Text>
         <List containerStyle={{borderTopWidth:0, marginTop:5}}>
-            {phonetic.slice(0,2).map((p, ind) => {
+            {phonetic.map((p, ind) => {
                 return <ListItem
                     title={p}
                     leftIcon={
@@ -85,10 +95,10 @@ const Answer = ({phonetic, word, selectedIndex}) => (
                             }}
                             containerStyle={{
                                 backgroundColor: '#ffe0b6',
-                                borderBottomLeftRadius:10,
-                                borderBottomRightRadius:10,
-                                borderTopLeftRadius:10,
-                                borderTopRightRadius:3,
+                                borderBottomLeftRadius:25,
+                                borderBottomRightRadius:25,
+                                borderTopLeftRadius:25,
+                                borderTopRightRadius:25,
                                 height:20,
                                 marginRight:10,
                         }}/>
@@ -141,17 +151,19 @@ class ShowDeck extends Component {
         }
         this.handlePressAction = this.handlePressAction.bind(this);
         this.handlePressStop = this.handlePressStop.bind(this);
+        this.handleDelete = this.handleDelete.bind(this);
     }
 
-	componentWillMount() {
+	componentDidMount() {
+        let TODAY = getDayDiff(BASE_DATE, new Date());
         var self = this;
 		filename = this.props.navigation.state.params.filename;
         fs.readFile(`${dirs.DocumentDir}/PhoneticCards/${filename}`, 'utf8')
         	.then((content) => {
                 let inputCards = JSON.parse(content).note;    
-                console.log(inputCards);
+                // console.log(inputCards);
                 inputCards = splitInSession(inputCards, TODAY, MAX);
-                console.log(inputCards);
+                // console.log(inputCards);
                 if (inputCards[IN].length == 0) {
                     this.props.navigation.navigate('Home');
                 }
@@ -165,16 +177,23 @@ class ShowDeck extends Component {
                     frequency: inputCards[IN][0].frequency,
                     fileName: filename,
                     index: 0,
+                    today: TODAY,
                 });
             })
             .catch((err) => {
-                console.log(err)
+                // console.log(err)
             })
+    }
+    
+    handleDelete() {
+        this.state.cards[this.state.index].difficulty = 0;
+        this.handlePressAction(0);
     }
 
     handlePressStop() {
         const { cards, leftOver } = this.state;
-        console.log(cards);
+        // console.log('hehehhe' + cards);
+        // console.log(cards);
         fs.writeFile(`${dirs.DocumentDir}/PhoneticCards/${filename}`, JSON.stringify({note: leftOver.concat(cards)}), 'utf8')
                     .catch(err => console.log(err));
     }
@@ -187,7 +206,7 @@ class ShowDeck extends Component {
         if (selectedIndex == 2) performanceRating = WORST;
 
         var newCards = cards;
-        newCards[index] = calculate(cards[index], performanceRating, TODAY);
+        newCards[index] = calculate(cards[index], performanceRating, this.state.today);
 
         this.setState({
             ...this.state,
@@ -217,13 +236,13 @@ class ShowDeck extends Component {
                 <View><Text>Loading...</Text></View>
             )
         }
-        console.log(this.state);
+        // console.log(this.state);
         const { selectedIndex, phonetic, word, fileName, frequency, index } = this.state
         if (!this.state.hasAnswered) {
             return(
                 <View style={styles.pageContainer}>
                     <View style={styles.form}>
-                        <Heading frequency={frequency} phonetic={phonetic} word={word} fileName={fileName} selectedIndex={selectedIndex}/>
+                        <Heading handleDelete={this.handleDelete} frequency={frequency} phonetic={phonetic} word={word} fileName={fileName} selectedIndex={selectedIndex}/>
                     </View>
                     <ShowButtons index={index} handlePressAction={ () => { this.setState({ ...this.state, hasAnswered: true, }); }}/>
                 </View>
@@ -232,7 +251,7 @@ class ShowDeck extends Component {
             return (
             <View style={styles.pageContainer}>
                 <View style={styles.form}>
-                    <Heading frequency={frequency} phonetic={phonetic} word={word} fileName={fileName} selectedIndex={selectedIndex}/>
+                    <Heading handleDelete={this.handleDelete} frequency={frequency} phonetic={phonetic} word={word} fileName={fileName} selectedIndex={selectedIndex}/>
                     <Answer phonetic={phonetic} word={word} selectedIndex={selectedIndex}/>
                 </View>
                 <PerfButtons phonetic={phonetic} word={word} selectedIndex={selectedIndex} handlePressAction={this.handlePressAction}/>
@@ -275,6 +294,7 @@ const styles = StyleSheet.create({
         marginLeft:0,
         borderWidth:0,
         borderRadius:0,
+        height:100,
     },
     innerBorderStyle: {
       // borderWidth: 0,

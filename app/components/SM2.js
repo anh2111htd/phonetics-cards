@@ -1,8 +1,8 @@
 //Adopt from https://github.com/lo-tp/sm2-plus/blob/master/source/src/index.js
-//Note: only revise items from 0.3 (init) to 0.15 (takes 3 times BEST)
-const WORST = 0;
-const CORRECT = 0.6;
-const BEST = 1;
+//Note: only revise items from 0.3 (init) to 0.15 (takes 3 times BEST, or 9 day)
+const WORST = 0.5; //no idea
+const CORRECT = 0.8; //small error
+const BEST = 1; //perfect
 const BASE_DATE = new Date('01/01/2015'); //mm dd yyyy
 
 const getDayDiff = (first, second) => {
@@ -72,6 +72,32 @@ const simulate = (difficulty, thrashHold) => {
     day = record.dueDate - TODAY;
     console.info(`day: ${day} index: ${index} difficulty:${record.difficulty}`);
     record = calculate(record, BEST, record.dueDate);
+    index += 1;
+  }
+
+  console.info(`day: ${day} index: ${index} difficulty:${record.difficulty}`);
+
+};
+
+const Nsimulate = (difficulty, thrashHold, turns) => {
+  let record = {
+        ...initialRecord,
+        difficulty,
+        dueDate: TODAY,
+        update: TODAY - 1,
+      };
+  let index = 1;
+  let day;
+  let ind = 0;
+  while (record.difficulty >= thrashHold) {
+    day = record.dueDate - TODAY;
+    console.info(`day: ${day} index: ${index} difficulty:${record.difficulty}`);
+    let ans = BEST;
+    if (ind < turns.length) {
+        ans = turns[ind];
+        ind++;
+    }
+    record = calculate(record, ans, record.dueDate);
     index += 1;
   }
 
