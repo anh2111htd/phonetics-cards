@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, ScrollView, Text, StatusBar, Vibration, Alert } from 'react-native';
+import { View, ScrollView, Text, StatusBar, Vibration, Alert, Linking } from 'react-native';
 import { List, ListItem, Button, normalize} from 'react-native-elements';
 import ActionButton from 'react-native-action-button';
 import UserAvatar from 'react-native-user-avatar';
@@ -33,10 +33,10 @@ class Decks extends Component {
     createDir() {
         RNFetchBlob.fs.mkdir(`${dirs.DocumentDir}/PhoneticCards`)
             .then(() => {
-                console.log('OK');
+                // console.log('OK');
             })
             .catch((err) => {
-                console.log('NG');
+                // console.log('NG');
             })
     }
 
@@ -61,8 +61,9 @@ class Decks extends Component {
                 // If not, create.
                 if (filteredFiles.length === 0) {
                     this.createDir();
-                }
-                return this.listFiles();
+                } 
+                    return this.listFiles();
+                
             })
             .then((files) => {
                 var contents = new Array(files.length);
@@ -72,9 +73,9 @@ class Decks extends Component {
                             let contentObject = JSON.parse(content).note;
                             contents[index] = splitDue(contentObject, TODAY)[0];
                         }, (reason) => {
-                            console.log(reason);
+                            // console.log(reason);
                         }).catch(err => {
-                            console.log(err);
+                            // console.log(err);
                         });
                 })).then((values) => {
                     var noteList = files.map((file, index) => {
@@ -160,8 +161,13 @@ class Decks extends Component {
                         }
                     </List>
                 </ScrollView>
-                <ActionButton buttonColor={GREEN} title="New Deck" onPress={() => this.props.navigation.navigate('Add')}>
+                <ActionButton buttonColor={GREEN}>
+                    <ActionButton.Item buttonColor={YELLOW} title="Request features/Give feedback" onPress={() => {Linking.openURL('https://goo.gl/73jgFU');}}>
+                        <Icon name="md-mail" style={styles.actionButtonIcon} />
+                    </ActionButton.Item>
+                    <ActionButton.Item buttonColor={GREEN} title="New Deck" onPress={() => this.props.navigation.navigate('Add')}>
                         <Icon name="md-create" style={styles.actionButtonIcon} />
+                    </ActionButton.Item>
                 </ActionButton>
             </View>
         );

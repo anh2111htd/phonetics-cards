@@ -1,7 +1,6 @@
 {
-  "presets": ["react-native"],
-  "ignore": [
-        "*.json",
-        "/app/components/cmu_dict.json"
-    ]
+    "presets": ["react-native"],
+    "ignore": ["*.json","/app/components/cmu_dict.json"],
+    "env": {"production":{"ignore": ["*.json","/app/components/cmu_dict.json"]}}
 }
+  

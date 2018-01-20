@@ -8,18 +8,20 @@ import { BASE_DATE, getDayDiff } from '../components/SM2'
 import RNFetchBlob from 'react-native-fetch-blob';
 const fs = RNFetchBlob.fs
 const dirs = RNFetchBlob.fs.dirs
+const dict_path = 'cmu_dict.json';
 
 const TODAY = getDayDiff(BASE_DATE, new Date());
-const dict = require('../components/cmu_dict.json');
 
 class Add extends Component {
   constructor() {
     super();
+    this.dict = {};
     this.state = {
       waiting: true,
       selectedIndex: 0, 
     };
     this.handlePress = this.handlePress.bind(this)
+    this.getPhonetic = this.getPhonetic.bind(this)
   }
 
   listDir() {
@@ -56,7 +58,17 @@ class Add extends Component {
       })
       .catch((err) => {
           // console.log(err)
-      })
+      });
+  }
+
+  componentDidMount() {
+    fs.readFile(fs.asset('cmu_dict.json'), 'utf8')
+      .then((content) => {
+            this.dict = JSON.parse(content);   
+        })
+        .catch((err) => {
+          // console.log(err)
+      });
   }
 
   getListofUniqueWords(string) {
@@ -81,17 +93,17 @@ class Add extends Component {
 
   getPhonetic(str) {
     var res = [];
-    if (dict.hasOwnProperty(str)){
-      res.push(dict[str]);
+    if (this.dict.hasOwnProperty(str)){
+      res.push(this.dict[str]);
     } 
-    if (dict.hasOwnProperty(str+'(1)')){
-      res.push(dict[str+'(1)']);
+    if (this.dict.hasOwnProperty(str+'(1)')){
+      res.push(this.dict[str+'(1)']);
     } 
-    if (dict.hasOwnProperty(str+'(2)')){
-      res.push(dict[str+'(2)']);
+    if (this.dict.hasOwnProperty(str+'(2)')){
+      res.push(this.dict[str+'(2)']);
     } 
-    if (dict.hasOwnProperty(str+'(3)')){
-      res.push(dict[str+'(3)']);
+    if (this.dict.hasOwnProperty(str+'(3)')){
+      res.push(this.dict[str+'(3)']);
     }
     return res;
   }

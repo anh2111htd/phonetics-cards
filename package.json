@@ -7,6 +7,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "babel-preset-react-native": "^4.0.0",
     "react": "16.0.0",
     "react-native": "0.51.0",
     "react-native-action-button": "^2.8.3",
@@ -18,8 +19,8 @@
   },
   "devDependencies": {
     "babel-jest": "21.2.0",
-    "babel-preset-react-native": "4.0.0",
     "jest": "21.2.1",
+    "metro": "^0.24.3",
     "react-test-renderer": "16.0.0"
   },
   "jest": {
